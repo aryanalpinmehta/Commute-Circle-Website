@@ -270,7 +270,16 @@ h1.title { font-family: var(--sans); font-weight: 800; font-size: clamp(30px, 5.
   // ============== Low-level fetch ==============
   async function rawFetch(url, method, body, extraHeaders) {
     var headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
-    var res = await fetch(url, { method: method, headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    var res;
+    try {
+      res = await fetch(url, { method: method, headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    } catch (networkErr) {
+      // fetch() itself throws (not an HTTP error status) only for network-layer
+      // failures — DNS, offline, CORS block. The browser's own message here
+      // ("Failed to fetch" / "Load failed") isn't something a visitor can act
+      // on, so replace it with something that is.
+      throw new Error("Can't reach CommuteCircle right now. The service may be down — please try again in a bit.");
+    }
     var text = await res.text();
     var json = null;
     try { json = text ? JSON.parse(text) : null; } catch (e) { /* non-JSON */ }
