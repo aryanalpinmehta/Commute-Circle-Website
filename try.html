@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Try CommuteCircle — in your browser</title>
+  <meta name="description" content="Create an account, set up a routine, and see real commute matches — no app download needed." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet" />
+
+  <style>
+:root {
+  --site-bg: #F1ECDE;
+  --site-bg-2: #EAE3D0;
+  --site-paper: #FBF8EF;
+  --ink: #0E1B1A;
+  --ink-2: #41524F;
+  --ink-3: #7B8B87;
+  --rule: #D9D1BB;
+  --rule-2: #E5DEC9;
+
+  --teal: #1B9C82;
+  --teal-deep: #0F6E5C;
+  --teal-tint: #E6F2EC;
+  --teal-soft: #C7E6DC;
+
+  --coral: #E89557;
+  --coral-soft: #FBE4D2;
+  --warn: #C24B3B;
+  --warn-soft: #F7E1DC;
+
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Manrope", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { background: var(--site-bg); color: var(--ink); margin: 0; }
+body { font-family: var(--sans); text-rendering: optimizeLegibility; }
+.container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+.wide { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+button { font-family: var(--sans); }
+
+/* ============== NAV ============== */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 24px; align-items: center; padding: 18px 32px;
+  background: color-mix(in oklab, var(--site-bg) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border-bottom: 1px solid var(--rule-2);
+}
+.nav__brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.nav__cta a { display: inline-flex; align-items: center; height: 40px; padding: 0 18px; background: var(--ink); color: var(--site-paper); border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; }
+.nav__status { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+
+/* ============== HERO ============== */
+.hero { padding: 56px 0 28px; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px; display: inline-flex; align-items: center; gap: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+h1.title { font-family: var(--sans); font-weight: 800; font-size: clamp(30px, 5.5vw, 44px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; }
+.title em { font-family: var(--serif); font-style: italic; font-weight: 500; color: var(--teal-deep); }
+.sub { font-size: 16px; line-height: 1.55; color: var(--ink-2); margin: 0 0 8px; max-width: 56ch; }
+
+/* ============== CARD / FORM ============== */
+.card {
+  background: var(--site-paper); border: 1px solid var(--rule);
+  border-radius: 18px; padding: 28px; margin: 28px 0;
+}
+.card h2 { font-size: 19px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+.card .hint { font-size: 13.5px; color: var(--ink-3); margin: 0 0 20px; line-height: 1.5; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.field input[type="text"], .field input[type="email"], .field input[type="password"],
+.field input[type="time"], .field select {
+  width: 100%; height: 46px; padding: 0 14px; border-radius: 12px;
+  border: 1px solid var(--rule); background: #fff; color: var(--ink);
+  font-size: 15px; font-family: var(--sans); outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--teal); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
+
+.days { display: flex; gap: 8px; flex-wrap: wrap; }
+.day {
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--rule);
+  background: #fff; color: var(--ink-2); font-size: 13px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+}
+.day.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+.autocomplete { position: relative; }
+.ac-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+  background: #fff; border: 1px solid var(--rule); border-radius: 12px;
+  overflow: hidden; box-shadow: 0 12px 28px rgba(14,27,26,0.12);
+}
+.ac-item { padding: 11px 14px; cursor: pointer; border-bottom: 1px solid var(--rule-2); }
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover { background: var(--teal-tint); }
+.ac-item .main { font-size: 14px; font-weight: 600; color: var(--ink); }
+.ac-item .sec { font-size: 12.5px; color: var(--ink-3); }
+
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 50px; border: 0; border-radius: 999px;
+  background: var(--ink); color: var(--site-paper); font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background .15s, opacity .15s;
+}
+.btn-primary:hover { background: var(--teal-deep); }
+.btn-primary:disabled { opacity: 0.5; cursor: default; }
+.btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 18px; border: 1.5px solid var(--ink); border-radius: 999px;
+  background: transparent; color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-secondary:hover { background: var(--ink); color: var(--site-paper); }
+.btn-link { background: none; border: none; color: var(--teal-deep); font-size: 14px; font-weight: 600; cursor: pointer; padding: 0; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+.tab {
+  flex: 1; height: 42px; border-radius: 999px; border: 1px solid var(--rule);
+  background: #fff; color: var(--ink-2); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.tab.active { background: var(--ink); color: var(--site-paper); border-color: var(--ink); }
+
+.banner {
+  padding: 12px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.5; margin-bottom: 18px;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.banner.error { background: var(--warn-soft); color: var(--warn); }
+.banner.info { background: var(--teal-tint); color: var(--teal-deep); }
+
+/* ============== DASHBOARD ============== */
+.section-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 12px; }
+.row-card {
+  background: #fff; border: 1px solid var(--rule); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.row-card .name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.row-card .meta { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.pill { font-family: var(--mono); font-size: 10.5px; padding: 3px 9px; border-radius: 999px; background: var(--teal-tint); color: var(--teal-deep); }
+.pill.signalled { background: var(--coral-soft); color: #9C5A2A; }
+.empty { color: var(--ink-3); font-size: 14px; padding: 18px 0; }
+
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--teal-soft); color: var(--teal-deep); font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.topbar .who { font-size: 14px; color: var(--ink-2); }
+.topbar .who strong { color: var(--ink); }
+
+/* ============== FOOTER ============== */
+.foot { background: var(--site-bg-2); padding: 60px 0 30px; color: var(--ink-2); margin-top: 60px; }
+.foot__grid { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.foot__brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); font-size: 15px; }
+.foot a { color: var(--ink-2); text-decoration: none; font-size: 13.5px; }
+.foot a:hover { color: var(--ink); }
+
+[hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <a class="nav__brand" href="/">
+      <span aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28">
+          <circle cx="16" cy="16" r="11" fill="none" stroke="#1B9C82" stroke-width="3"></circle>
+          <circle cx="16" cy="16" r="6.5" fill="none" stroke="#8BD5BE" stroke-width="3"></circle>
+        </svg>
+      </span>
+      <span>CommuteCircle</span>
+    </a>
+    <span></span>
+    <div class="nav__cta"><a href="/">Back to site</a></div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow"><span class="dot" id="statusDot"></span> Browser preview</p>
+      <h1 class="title">Try it <em>right here.</em></h1>
+      <p class="sub">This talks to the same CommuteCircle backend as the iOS app — real account, real circles, real matches. No install needed. For the full experience (chat, activity history, notifications), get the app.</p>
+    </div>
+  </section>
+
+  <div class="container" id="app"></div>
+
+  <footer class="foot">
+    <div class="wide foot__grid">
+      <div class="foot__brand">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="22" height="22">
+            <circle cx="16" cy="16" r="11" fill="none" stroke="#1B9C82" stroke-width="3"></circle>
+            <circle cx="16" cy="16" r="6.5" fill="none" stroke="#8BD5BE" stroke-width="3"></circle>
+          </svg>
+        </span>
+        <span>CommuteCircle</span>
+      </div>
+      <div style="display:flex; gap:22px;">
+        <a href="/">Home</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:hello@commutecircle.app">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============== Config (same values shipped in the iOS app) ==============
+  var SUPABASE_URL = 'https://odoffkxgsljiyxfptspd.supabase.co';
+  var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kb2Zma3hnc2xqaXl4ZnB0c3BkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTMzMDAsImV4cCI6MjA5NTk4OTMwMH0.9dgWMnSAfCgIMt5zsy4VqEw6SPpxeS62gzI26aJgBoc';
+  var GOOGLE_MAPS_KEY = 'AIzaSyBtyHFcohJqZiKA8U65zNDkA6vHiT91yC8';
+  var REST = SUPABASE_URL + '/rest/v1';
+  var AUTH = SUPABASE_URL + '/auth/v1';
+  var FN = SUPABASE_URL + '/functions/v1';
+  var DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var CATEGORIES = ['School', 'Residential', 'CCA/Team', 'Friend Circle'];
+
+  // ============== State ==============
+  var session = null;
+  try { session = JSON.parse(localStorage.getItem('cc_session') || 'null'); } catch (e) { session = null; }
+  var state = {
+    view: 'loading',       // loading | auth | onboarding | dashboard
+    profile: null,
+    networks: [],
+    routines: [],
+    matches: [],
+    error: null,
+    busy: false,
+    authMode: 'signin',    // signin | signup
+    circleMode: 'join',    // join | create
+  };
+
+  var appEl = document.getElementById('app');
+  var statusDot = document.getElementById('statusDot');
+
+  // ============== Session / token helpers ==============
+  function saveSession(data) {
+    session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + ((data.expires_in || 3600) * 1000),
+    };
+    localStorage.setItem('cc_session', JSON.stringify(session));
+  }
+  function clearSession() {
+    session = null;
+    localStorage.removeItem('cc_session');
+  }
+  async function ensureToken() {
+    if (!session) return null;
+    if (Date.now() > session.expires_at - 30000) {
+      try {
+        var data = await rawFetch(AUTH + '/token?grant_type=refresh_token', 'POST', { refresh_token: session.refresh_token }, { apikey: ANON_KEY });
+        saveSession(data);
+      } catch (e) {
+        clearSession();
+        return null;
+      }
+    }
+    return session.access_token;
+  }
+
+  // ============== Low-level fetch ==============
+  async function rawFetch(url, method, body, extraHeaders) {
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders || {});
+    var res = await fetch(url, { method: method, headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined });
+    var text = await res.text();
+    var json = null;
+    try { json = text ? JSON.parse(text) : null; } catch (e) { /* non-JSON */ }
+    if (!res.ok) {
+      var msg = (json && (json.message || json.error_description || json.msg || json.error)) || ('Request failed (' + res.status + ')');
+      var err = new Error(msg);
+      err.status = res.status;
+      throw err;
+    }
+    return json;
+  }
+
+  // REST/RPC/function call with auth headers attached
+  async function api(path, opts) {
+    opts = opts || {};
+    var token = await ensureToken();
+    var base = opts.isFn ? FN : REST;
+    var headers = { apikey: ANON_KEY };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    if (opts.method === 'POST' || opts.method === 'PATCH') headers.Prefer = 'return=representation';
+    return rawFetch(base + path, opts.method || 'GET', opts.body, headers);
+  }
+
+  async function authApi(path, body) {
+    return rawFetch(AUTH + path, 'POST', body, { apikey: ANON_KEY });
+  }
+
+  // ============== Data layer (mirrors the iOS app's REST contract) ==============
+  async function fetchProfile() {
+    var rows = await api('/users?limit=1');
+    return rows && rows[0];
+  }
+  async function updateProfile(patch) {
+    var rows = await api('/users?id=eq.' + encodeURIComponent(state.profile.id), { method: 'PATCH', body: patch });
+    return rows[0];
+  }
+  async function listNetworks(userId) {
+    var memberships = await api('/network_members?user_id=eq.' + encodeURIComponent(userId));
+    if (!memberships.length) return [];
+    var ids = memberships.map(function (m) { return 'id.eq.' + m.network_id; }).join(',');
+    return api('/networks?or=(' + ids + ')&order=created_at.desc');
+  }
+  async function createNetwork(name, category, inviteCode) {
+    var rows = await api('/networks', { method: 'POST', body: { name: name, category: category, invite_code: inviteCode, admin_id: state.profile.id, admin_email: state.profile.email, member_count: 0 } });
+    var net = rows[0];
+    await api('/network_members', { method: 'POST', body: { network_id: net.id, user_id: state.profile.id } });
+    net.member_count = 1;
+    return net;
+  }
+  async function joinNetworkByCode(code) {
+    var results = await api('/rpc/find_network_by_invite_code', { method: 'POST', body: { p_code: code.toUpperCase() } });
+    if (!results || !results.length) throw new Error("No circle found with that code.");
+    var net = results[0];
+    try {
+      await api('/network_members', { method: 'POST', body: { network_id: net.id, user_id: state.profile.id } });
+    } catch (e) {
+      if (e.status !== 409) throw e;
+    }
+    return net;
+  }
+  async function listRoutines(userId) {
+    return api('/routines?user_id=eq.' + encodeURIComponent(userId) + '&order=created_at.desc');
+  }
+  async function createRoutine(payload) {
+    var rows = await api('/routines', { method: 'POST', body: payload });
+    return rows[0];
+  }
+  async function deleteRoutine(id) {
+    await api('/routines?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+  }
+  async function triggerMatching() {
+    try { await api('/generate-matches', { isFn: true, method: 'POST', body: {} }); } catch (e) { /* non-fatal — matches may already exist */ }
+  }
+  async function listMatches(userId) {
+    return api('/matches?or=(user1_id.eq.' + encodeURIComponent(userId) + ',user2_id.eq.' + encodeURIComponent(userId) + ')&order=created_at.desc');
+  }
+  async function signalMatch(match) {
+    var isUser1 = match.user1_id === state.profile.id;
+    var body = isUser1 ? { user1_signalled: true } : { user2_signalled: true };
+    var rows = await api('/matches?id=eq.' + encodeURIComponent(match.id), { method: 'PATCH', body: body });
+    return rows[0];
+  }
+
+  // ============== Google Places (same key/flow as the iOS app) ==============
+  async function placesAutocomplete(input) {
+    var res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': GOOGLE_MAPS_KEY },
+      body: JSON.stringify({ input: input }),
+    });
+    if (!res.ok) return [];
+    var data = await res.json();
+    return (data.suggestions || []).map(function (s) {
+      var p = s.placePrediction;
+      return {
+        placeId: p.placeId,
+        main: (p.structuredFormat && p.structuredFormat.mainText && p.structuredFormat.mainText.text) || p.text.text,
+        secondary: (p.structuredFormat && p.structuredFormat.secondaryText && p.structuredFormat.secondaryText.text) || '',
+      };
+    });
+  }
+  async function placeDetails(placeId) {
+    var res = await fetch('https://places.googleapis.com/v1/places/' + placeId, {
+      headers: { 'X-Goog-Api-Key': GOOGLE_MAPS_KEY, 'X-Goog-FieldMask': 'id,formattedAddress,location' },
+    });
+    return res.json();
+  }
+
+  function wireAutocomplete(inputEl, listEl, onSelect) {
+    var timer = null;
+    var chosenText = null;
+    inputEl.addEventListener('input', function () {
+      var q = inputEl.value.trim();
+      if (chosenText !== null && q !== chosenText) chosenText = null;
+      clearTimeout(timer);
+      if (q.length < 3) { listEl.innerHTML = ''; listEl.hidden = true; return; }
+      timer = setTimeout(async function () {
+        var preds = await placesAutocomplete(q);
+        if (!preds.length) { listEl.hidden = true; return; }
+        listEl.innerHTML = preds.map(function (p, i) {
+          return '<div class="ac-item" data-i="' + i + '"><div class="main"></div><div class="sec"></div></div>';
+        }).join('');
+        var items = listEl.querySelectorAll('.ac-item');
+        items.forEach(function (el, i) {
+          el.querySelector('.main').textContent = preds[i].main;
+          el.querySelector('.sec').textContent = preds[i].secondary;
+          el.addEventListener('click', async function () {
+            var details = await placeDetails(preds[i].placeId);
+            chosenText = details.formattedAddress || preds[i].main;
+            inputEl.value = chosenText;
+            listEl.innerHTML = ''; listEl.hidden = true;
+            onSelect({
+              address: chosenText,
+              lat: details.location ? details.location.latitude : null,
+              lng: details.location ? details.location.longitude : null,
+            });
+          });
+        });
+        listEl.hidden = false;
+      }, 250);
+    });
+    document.addEventListener('click', function (e) {
+      if (!listEl.contains(e.target) && e.target !== inputEl) { listEl.hidden = true; }
+    });
+  }
+
+  // ============== Bootstrap ==============
+  async function bootstrap() {
+    if (!session) { state.view = 'auth'; render(); return; }
+    try {
+      var profile = await fetchProfile();
+      state.profile = profile;
+      if (!profile || !profile.onboarding_completed) {
+        state.view = 'onboarding';
+      } else {
+        state.view = 'dashboard';
+        await loadDashboard();
+      }
+    } catch (e) {
+      clearSession();
+      state.view = 'auth';
+    }
+    render();
+  }
+
+  async function loadDashboard() {
+    var uid = state.profile.id;
+    var results = await Promise.allSettled([listNetworks(uid), listRoutines(uid), listMatches(uid)]);
+    state.networks = results[0].status === 'fulfilled' ? results[0].value : [];
+    state.routines = results[1].status === 'fulfilled' ? results[1].value : [];
+    state.matches = results[2].status === 'fulfilled' ? results[2].value : [];
+    state.dashError = results.some(function (r) { return r.status === 'rejected'; })
+      ? "Couldn't load everything — check your connection and refresh." : null;
+  }
+
+  // ============== Rendering ==============
+  function render() {
+    statusDot.style.background = session ? '#1B9C82' : '#7B8B87';
+    if (state.view === 'loading') { appEl.innerHTML = '<p class="empty">Loading…</p>'; return; }
+    if (state.view === 'auth') { renderAuth(); return; }
+    if (state.view === 'onboarding') { renderOnboarding(); return; }
+    if (state.view === 'dashboard') { renderDashboard(); return; }
+  }
+
+  function errorBanner(msg) {
+    return msg ? '<div class="banner error">⚠️ ' + escapeHTML(msg) + '</div>' : '';
+  }
+  function escapeHTML(s) {
+    var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML;
+  }
+
+  // ---------- Auth ----------
+  function renderAuth() {
+    var isSignup = state.authMode === 'signup';
+    appEl.innerHTML =
+      '<div class="card">' +
+        '<div class="tabs">' +
+          '<button class="tab' + (!isSignup ? ' active' : '') + '" data-mode="signin">Sign in</button>' +
+          '<button class="tab' + (isSignup ? ' active' : '') + '" data-mode="signup">Create account</button>' +
+        '</div>' +
+        errorBanner(state.error) +
+        (isSignup ? '<div class="field"><label>Full name</label><input type="text" id="fName" placeholder="Aryan Mehta" /></div>' : '') +
+        '<div class="field"><label>Email</label><input type="email" id="fEmail" placeholder="you@example.com" /></div>' +
+        '<div class="field"><label>Password</label><input type="password" id="fPassword" placeholder="8+ characters" /></div>' +
+        '<button class="btn-primary" id="authSubmit">' + (isSignup ? 'Create account' : 'Sign in') + '</button>' +
+        '<p class="hint" style="margin-top:14px;">Same account works in the iOS app too — everything lives on the real CommuteCircle backend.</p>' +
+      '</div>';
+
+    appEl.querySelectorAll('.tab').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.authMode = btn.dataset.mode; state.error = null; render(); });
+    });
+    appEl.querySelector('#authSubmit').addEventListener('click', async function () {
+      var email = appEl.querySelector('#fEmail').value.trim();
+      var password = appEl.querySelector('#fPassword').value;
+      var fullName = isSignup ? appEl.querySelector('#fName').value.trim() : '';
+      if (!email.includes('@') || !email.includes('.')) { state.error = 'Enter a valid email address.'; render(); return; }
+      if (password.length < 8) { state.error = 'Password must be at least 8 characters.'; render(); return; }
+      if (isSignup && !fullName) { state.error = 'Enter your name.'; render(); return; }
+      var btn = appEl.querySelector('#authSubmit');
+      btn.disabled = true; btn.textContent = 'Please wait…';
+      try {
+        var data = isSignup
+          ? await authApi('/signup', { email: email, password: password, data: { full_name: fullName } })
+          : await authApi('/token?grant_type=password', { email: email, password: password });
+        saveSession(data);
+        state.error = null;
+        state.view = 'loading'; render();
+        await bootstrap();
+      } catch (e) {
+        state.error = isSignup
+          ? (e.message || "Couldn't create your account. Try a different email.")
+          : "Couldn't sign in — check your email/password, or check your connection.";
+        render();
+      }
+    });
+  }
+
+  // ---------- Onboarding ----------
+  function renderOnboarding() {
+    appEl.innerHTML =
+      '<div class="card">' +
+        '<h2>Set up your profile</h2>' +
+        '<p class="hint">This is what circle members will see, and roughly where you commute from.</p>' +
+        errorBanner(state.error) +
+        '<div class="field"><label>Full name</label><input type="text" id="obName" value="' + escapeHTML((state.profile && state.profile.full_name) || '') + '" /></div>' +
+        '<div class="field autocomplete"><label>Home area</label><input type="text" id="obAddress" placeholder="Start typing your street or block…" autocomplete="off" /><div class="ac-list" id="obAddressList" hidden></div></div>' +
+        '<div class="field"><label>Phone (optional)</label><input type="text" id="obPhone" placeholder="+65 9123 4567" /></div>' +
+        '<button class="btn-primary" id="obSubmit">Continue</button>' +
+      '</div>';
+
+    var addrEl = appEl.querySelector('#obAddress');
+    var listEl = appEl.querySelector('#obAddressList');
+    var picked = { address: null, lat: null, lng: null };
+    wireAutocomplete(addrEl, listEl, function (result) { picked = result; });
+
+    appEl.querySelector('#obSubmit').addEventListener('click', async function () {
+      var name = appEl.querySelector('#obName').value.trim();
+      var address = picked.address || addrEl.value.trim();
+      var phone = appEl.querySelector('#obPhone').value.trim();
+      if (!name) { state.error = 'Enter your name.'; render(); return; }
+      if (!address) { state.error = 'Enter your home area.'; render(); return; }
+      var btn = appEl.querySelector('#obSubmit');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+        state.profile = await updateProfile({
+          full_name: name, home_address: address,
+          phone_number: phone || null, timezone: tz, onboarding_completed: true,
+        });
+        state.error = null;
+        state.view = 'dashboard';
+        await loadDashboard();
+        render();
+      } catch (e) {
+        state.error = e.message || "Couldn't save your profile — check your connection and try again.";
+        render();
+      }
+    });
+  }
+
+  // ---------- Dashboard ----------
+  function renderDashboard() {
+    var p = state.profile;
+    var initials = (p.full_name || p.email).split(' ').map(function (s) { return s[0]; }).slice(0, 2).join('').toUpperCase();
+
+    appEl.innerHTML =
+      '<div class="topbar"><p class="who">Signed in as <strong>' + escapeHTML(p.full_name || p.email) + '</strong></p><button class="btn-link" id="logoutBtn">Log out</button></div>' +
+      errorBanner(state.dashError) +
+
+      '<div class="card">' +
+        '<h2>Your circles</h2>' +
+        '<p class="hint">Join with an invite code from a friend, or start your own.</p>' +
+        (state.networks.length
+          ? state.networks.map(function (n) {
+              return '<div class="row-card"><div><div class="name">' + escapeHTML(n.name) + '</div><div class="meta">' + escapeHTML(n.category) + ' · code ' + escapeHTML(n.invite_code) + ' · ' + (n.member_count || 1) + ' member' + ((n.member_count || 1) === 1 ? '' : 's') + '</div></div></div>';
+            }).join('')
+          : '<p class="empty">You haven\'t joined a circle yet.</p>') +
+        '<div class="tabs" style="margin-top:18px;">' +
+          '<button class="tab' + (state.circleMode === 'join' ? ' active' : '') + '" data-cmode="join">Join with code</button>' +
+          '<button class="tab' + (state.circleMode === 'create' ? ' active' : '') + '" data-cmode="create">Start a circle</button>' +
+        '</div>' +
+        (state.circleMode === 'join'
+          ? '<div class="field-row"><div class="field" style="margin-bottom:0;"><input type="text" id="joinCode" placeholder="6-character code" maxlength="6" style="text-transform:uppercase;" /></div><button class="btn-secondary" id="joinBtn">Join</button></div>'
+          : '<div class="field"><label>Circle name</label><input type="text" id="createName" placeholder="e.g. Marine Parade Block 21" /></div>' +
+            '<div class="field"><label>Category</label><select id="createCategory">' + CATEGORIES.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') + '</select></div>' +
+            '<button class="btn-primary" id="createCircleBtn">Create circle</button>') +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h2>Your routine</h2>' +
+        '<p class="hint">Set the trip you take regularly — CommuteCircle matches you against others in your circles heading the same way, in the same window, on the same days.</p>' +
+        (state.routines.length
+          ? state.routines.map(function (r) {
+              return '<div class="row-card"><div><div class="name">' + escapeHTML(r.destination) + '</div><div class="meta">' + escapeHTML(r.window_start) + '–' + escapeHTML(r.window_end) + ' · ' + (r.active_days || []).join(', ') + '</div></div><button class="btn-link" data-del-routine="' + r.id + '">Remove</button></div>';
+            }).join('')
+          : '<p class="empty">No routine yet — add one below.</p>') +
+        (state.networks.length
+          ? '<div class="field autocomplete"><label>Destination</label><input type="text" id="rDest" placeholder="Where are you heading?" autocomplete="off" /><div class="ac-list" id="rDestList" hidden></div></div>' +
+            '<div class="field-row"><div class="field"><label>Leave from</label><input type="time" id="rStart" value="07:30" /></div><div class="field"><label>Until</label><input type="time" id="rEnd" value="08:15" /></div></div>' +
+            '<div class="field"><label>Active days</label><div class="days" id="rDays">' + DAY_NAMES.map(function (d) { return '<button type="button" class="day" data-day="' + d + '">' + d[0] + '</button>'; }).join('') + '</div></div>' +
+            '<div class="field"><label>Circle</label><select id="rNetwork">' + state.networks.map(function (n) { return '<option value="' + n.id + '">' + escapeHTML(n.name) + '</option>'; }).join('') + '</select></div>' +
+            '<button class="btn-primary" id="rSubmit">Add routine &amp; find matches</button>'
+          : '<p class="hint">Join or start a circle first — routines are matched within a shared circle.</p>') +
+      '</div>' +
+
+      '<div class="card">' +
+        '<h2>Today\'s matches</h2>' +
+        '<p class="hint">Real matches computed by the backend — appears once someone else in your circle has an overlapping routine.</p>' +
+        (state.matches.length
+          ? state.matches.map(renderMatchRow).join('')
+          : '<p class="empty">No matches yet. Once someone else in your circle sets an overlapping routine, they\'ll show up here — refresh to check.</p>') +
+        '<button class="btn-secondary" id="refreshBtn" style="margin-top:6px;">Refresh matches</button>' +
+      '</div>';
+
+    // ----- wire events -----
+    appEl.querySelector('#logoutBtn').addEventListener('click', function () {
+      clearSession(); state = { view: 'auth', profile: null, networks: [], routines: [], matches: [], error: null, authMode: 'signin', circleMode: 'join' };
+      render();
+    });
+
+    appEl.querySelectorAll('[data-cmode]').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.circleMode = btn.dataset.cmode; render(); });
+    });
+
+    var joinBtn = appEl.querySelector('#joinBtn');
+    if (joinBtn) joinBtn.addEventListener('click', async function () {
+      var code = appEl.querySelector('#joinCode').value.trim();
+      if (!code) return;
+      joinBtn.disabled = true;
+      try {
+        await joinNetworkByCode(code);
+        await loadDashboard();
+        state.dashError = null;
+      } catch (e) { state.dashError = e.message || "Couldn't join that circle."; }
+      render();
+    });
+
+    var createCircleBtn = appEl.querySelector('#createCircleBtn');
+    if (createCircleBtn) createCircleBtn.addEventListener('click', async function () {
+      var name = appEl.querySelector('#createName').value.trim();
+      var category = appEl.querySelector('#createCategory').value;
+      if (!name) { state.dashError = 'Enter a circle name.'; render(); return; }
+      createCircleBtn.disabled = true;
+      try {
+        var alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        var code = ''; for (var i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+        await createNetwork(name, category, code);
+        await loadDashboard();
+        state.dashError = null;
+        state.circleMode = 'join';
+      } catch (e) { state.dashError = e.message || "Couldn't create that circle."; }
+      render();
+    });
+
+    appEl.querySelectorAll('[data-del-routine]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        try { await deleteRoutine(btn.dataset.delRoutine); await loadDashboard(); } catch (e) { state.dashError = e.message; }
+        render();
+      });
+    });
+
+    var rDest = appEl.querySelector('#rDest');
+    var rPicked = { address: null, lat: null, lng: null };
+    if (rDest) wireAutocomplete(rDest, appEl.querySelector('#rDestList'), function (r) { rPicked = r; });
+
+    var activeDays = [];
+    appEl.querySelectorAll('.day').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var d = btn.dataset.day;
+        var idx = activeDays.indexOf(d);
+        if (idx >= 0) { activeDays.splice(idx, 1); btn.classList.remove('on'); }
+        else { activeDays.push(d); btn.classList.add('on'); }
+      });
+    });
+
+    var rSubmit = appEl.querySelector('#rSubmit');
+    if (rSubmit) rSubmit.addEventListener('click', async function () {
+      var dest = rPicked.address || rDest.value.trim();
+      var start = appEl.querySelector('#rStart').value;
+      var end = appEl.querySelector('#rEnd').value;
+      var networkId = appEl.querySelector('#rNetwork').value;
+      if (!dest) { state.dashError = 'Enter a destination.'; render(); return; }
+      if (!activeDays.length) { state.dashError = 'Pick at least one active day.'; render(); return; }
+      rSubmit.disabled = true; rSubmit.textContent = 'Finding matches…';
+      try {
+        await createRoutine({
+          user_id: p.id, user_email: p.email, name: dest, destination: dest,
+          destination_lat: rPicked.lat, destination_lng: rPicked.lng,
+          window_start: start, window_end: end, active_days: activeDays,
+          network_ids: [networkId], is_active: true,
+        });
+        await triggerMatching();
+        await loadDashboard();
+        state.dashError = null;
+      } catch (e) { state.dashError = e.message || "Couldn't save your routine."; }
+      render();
+    });
+
+    appEl.querySelector('#refreshBtn').addEventListener('click', async function () {
+      await triggerMatching();
+      await loadDashboard();
+      render();
+    });
+
+    appEl.querySelectorAll('[data-signal]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var match = state.matches.find(function (m) { return m.id === btn.dataset.signal; });
+        if (!match) return;
+        btn.disabled = true;
+        try { await signalMatch(match); await loadDashboard(); } catch (e) { state.dashError = e.message; }
+        render();
+      });
+    });
+  }
+
+  function renderMatchRow(m) {
+    var p = state.profile;
+    var isUser1 = m.user1_id === p.id;
+    var otherName = isUser1 ? (m.user2_name || m.user2_email) : (m.user1_name || m.user1_email);
+    var mySignal = isUser1 ? m.user1_signalled : m.user2_signalled;
+    return '<div class="row-card">' +
+      '<div style="display:flex; align-items:center; gap:12px;">' +
+        '<div class="avatar">' + escapeHTML((otherName || '?').slice(0, 2).toUpperCase()) + '</div>' +
+        '<div><div class="name">' + escapeHTML(otherName) + '</div><div class="meta">' + escapeHTML(m.destination) + (m.fuzzy_time ? ' · ~' + escapeHTML(m.fuzzy_time) : '') + '</div></div>' +
+      '</div>' +
+      (mySignal
+        ? '<span class="pill signalled">You signalled</span>'
+        : '<button class="btn-secondary" data-signal="' + m.id + '" style="height:38px; padding:0 14px; font-size:13px;">Signal I\'m leaving</button>') +
+      '</div>';
+  }
+
+  bootstrap();
+})();
+</script>
+</body>
+</html>
